@@ -1,9 +1,9 @@
 use crossterm::event::{read, Event::Key, KeyCode::Char, KeyEvent, KeyModifiers, Event};
-use crossterm::execute;
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType};
-use std::io::stdout;
 mod terminal;
+use terminal::ClearType;
 use terminal::Terminal;
+use std::time::Duration;
+use std::thread::sleep;
 pub struct Editor {
     should_quit : bool,
 }
@@ -20,10 +20,11 @@ impl Editor {
     }
 
     fn draw_rows() -> Result<(), std::io::Error> {
-        let height = Terminal::size()?.1;
+        let height = Terminal::size()?.rows;
         for r in 0..height {
+            Terminal::clear_screen(ClearType::CurrentLine)?;
             crossterm::cursor::MoveTo(0,r);
-            println!("\r~")
+            Terminal::print("\r~")?;
         }
         Ok(())
     }
@@ -53,13 +54,16 @@ impl Editor {
         }
     }
     fn refresh_screen(&self) -> Result<(), std::io::Error> {
+        Terminal::hide_cursor()?;
         if self.should_quit {
-            Terminal::clear_screen()?;
-            print!("Goodbye.\r\n");
+            Terminal::clear_screen(ClearType::All)?;
+            Terminal::print("Goodbye.\r\n")?;
         } else {
             Self::draw_rows()?;
             Terminal::move_cursor_to(0, 0)?;
         }
+        Terminal::show_cursor()?;
+        Terminal::execute()?;
         Ok(())
     }
 
