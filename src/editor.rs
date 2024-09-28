@@ -1,16 +1,15 @@
-use crossterm::event::{read, Event::Key, KeyCode::Char, KeyEvent, KeyModifiers, Event};
+use crossterm::event::{read, Event, Event::Key, KeyCode::Char, KeyEvent, KeyModifiers};
+use std::io::Error;
 mod terminal;
-use terminal::ClearType;
-use terminal::Terminal;
-use std::time::Duration;
-use std::thread::sleep;
+use terminal::{Terminal, Size, Position};
+
 pub struct Editor {
-    should_quit : bool,
+    should_quit: bool,
 }
 
 impl Editor {
-    pub fn default() -> Self {
-        Editor { should_quit: false }
+    pub const fn default() -> Self {
+        Self { should_quit: false }
     }
     pub fn run(&mut self) {
         Terminal::initialize().unwrap();
@@ -19,17 +18,7 @@ impl Editor {
         result.unwrap();
     }
 
-    fn draw_rows() -> Result<(), std::io::Error> {
-        let height = Terminal::size()?.rows;
-        for r in 0..height {
-            Terminal::clear_screen(ClearType::CurrentLine)?;
-            crossterm::cursor::MoveTo(0,r);
-            Terminal::print("\r~")?;
-        }
-        Ok(())
-    }
-
-    fn repl(&mut self) -> Result<(), std::io::Error> {
+    fn repl(&mut self) -> Result<(), Error> {
         loop {
             self.refresh_screen()?;
             if self.should_quit {
@@ -53,18 +42,28 @@ impl Editor {
             }
         }
     }
-    fn refresh_screen(&self) -> Result<(), std::io::Error> {
+    fn refresh_screen(&self) -> Result<(), Error> {
         Terminal::hide_cursor()?;
         if self.should_quit {
-            Terminal::clear_screen(ClearType::All)?;
+            Terminal::clear_screen()?;
             Terminal::print("Goodbye.\r\n")?;
         } else {
             Self::draw_rows()?;
-            Terminal::move_cursor_to(0, 0)?;
+            Terminal::move_cursor_to(Position{x:0, y:0})?;
         }
         Terminal::show_cursor()?;
         Terminal::execute()?;
         Ok(())
     }
-
+    fn draw_rows() -> Result<(), Error> {
+        let Size{height, ..} = Terminal::size()?;
+        for current_row in 0..height {
+            Terminal::clear_line()?;
+            Terminal::print("~")?;
+            if current_row + 1 < height {
+                Terminal::print("\r\n")?;
+            }
+        }
+        Ok(())
+    }
 }
