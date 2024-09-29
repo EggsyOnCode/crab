@@ -6,3 +6,4 @@ RUST_BACKTRACE= "1"
 
 [dependencies]
 crossterm = "0.28.1"
+custom_error = "1.9.2"

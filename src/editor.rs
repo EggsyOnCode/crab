@@ -5,7 +5,7 @@ use terminal::{Terminal, Size, Position};
 
 pub struct Editor {
     should_quit: bool,
-    terminal : Terminal,
+    terminal : Terminal, // should be an interface
 }
 
 impl Editor {
@@ -41,7 +41,7 @@ impl Editor {
                     self.should_quit = true;
                 }
                 _ => {
-                    self.terminal.move_cursor(code);
+                    self.terminal.move_cursor(code, modifiers);
                 },
             }
         }
