@@ -187,6 +187,19 @@ impl Terminal {
                 self.curr_pos.y += 1;
                 self.curr_pos.x = 0;
             }
+            KeyCode::Backspace => {
+                // chars not at the start of the line
+                if self.curr_pos.x > 0 {
+                    let line = self.buffer.get_mut(self.curr_pos.y as usize).unwrap();
+                    line.remove(self.curr_pos.x as usize - 1);
+                    self.curr_pos.x -= 1;
+                } else if self.curr_pos.y > 0 {
+                    let line = self.buffer.remove(self.curr_pos.y as usize);
+                    self.curr_pos.y -= 1;
+                    self.curr_pos.x = self.buffer[self.curr_pos.y as usize].len() as u16;
+                    self.buffer[self.curr_pos.y as usize].push_str(&line);
+                }
+            }
             _ => {
                 if let KeyCode::Char(c) = code {
                     self.insert_char(*c);
