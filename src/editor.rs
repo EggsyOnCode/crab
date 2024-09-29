@@ -1,20 +1,22 @@
-use crossterm::event::{read, Event, Event::Key, KeyCode::Char, KeyEvent, KeyModifiers};
+use crossterm::event::{read, Event, Event::Key, KeyCode::Char, KeyEvent, KeyModifiers, KeyCode};
 use std::io::Error;
 mod terminal;
 use terminal::{Terminal, Size, Position};
 
 pub struct Editor {
     should_quit: bool,
+    terminal : Terminal,
 }
 
 impl Editor {
     pub const fn default() -> Self {
-        Self { should_quit: false }
+        let terminal = Terminal::default();
+        Self { should_quit: false , terminal: terminal}
     }
     pub fn run(&mut self) {
-        Terminal::initialize().unwrap();
+        self.terminal.initialize().unwrap();
         let result = self.repl();
-        Terminal::terminate().unwrap();
+        self.terminal.terminate().unwrap();
         result.unwrap();
     }
 
@@ -38,32 +40,20 @@ impl Editor {
                 Char('q') if *modifiers == KeyModifiers::CONTROL => {
                     self.should_quit = true;
                 }
-                _ => (),
+                _ => {
+                    self.terminal.move_cursor(code);
+                },
             }
         }
     }
     fn refresh_screen(&self) -> Result<(), Error> {
-        Terminal::hide_cursor()?;
+        // self.terminal.hide_cursor()?;
         if self.should_quit {
-            Terminal::clear_screen()?;
-            Terminal::print("Goodbye.\r\n")?;
-        } else {
-            Self::draw_rows()?;
-            Terminal::move_cursor_to(Position{x:0, y:0})?;
-        }
-        Terminal::show_cursor()?;
+            self.terminal.clear_screen()?;
+            self.terminal.print("Goodbye.\r\n")?;
+        } 
+        self.terminal.show_cursor()?;
         Terminal::execute()?;
-        Ok(())
-    }
-    fn draw_rows() -> Result<(), Error> {
-        let Size{height, ..} = Terminal::size()?;
-        for current_row in 0..height {
-            Terminal::clear_line()?;
-            Terminal::print("~")?;
-            if current_row + 1 < height {
-                Terminal::print("\r\n")?;
-            }
-        }
         Ok(())
     }
 }
